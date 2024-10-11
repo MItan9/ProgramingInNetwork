@@ -27,8 +27,6 @@ fetch(proxyUrl + targetUrl)
 
     const productElements = doc.querySelectorAll('.product-card'); 
 
-    // console.log('Amount of found products:', productElements.length);
-
     productElements.forEach(element => {
      
       const nameElement = element.querySelector('.product-title');
@@ -36,17 +34,25 @@ fetch(proxyUrl + targetUrl)
 
       const priceElement = element.querySelector('.text-accent');
       const price = priceElement ? priceElement.innerText.trim() : 'Price doesnt exist'; 
+    //   console.log(typeof price); // "string"
 
-      console.log(typeof price);
 
-      const linkElement = element.querySelector('a.card-img-top');
-      let link = linkElement ? linkElement.href : null; 
-  
+                                    //  FOURTH TASK
+      const floatPrice = parseFloat(price);
+    //   console.log(typeof floatPrice); // "number"
 
-      if (link) {
-        link = link.replace(/^file:\/\/\/C:[^/]*/, ''); 
-        link = link.replace(/\/ro/, ''); 
-        products.push({ name, price, link }); 
+
+
+    const validatedName = name.replace(/\s+/g, ' ').trim(); // replace 2 and more spaces with one space
+    console.log(validatedName);
+
+    if (!validatedName || validatedName.length === 0) {
+      console.error('Invalid product name. Skipping product.');
+      return; 
+    }
+
+      if (validatedName && floatPrice) {
+        products.push({ validatedName, floatPrice}); 
       }
 
 
@@ -55,11 +61,30 @@ fetch(proxyUrl + targetUrl)
     // console.log(products);
 
                                       //  THIRD TASK
-     const maxRequests = Math.min(products.length, 10); 
-    for (let i = 0; i < maxRequests; i++) {
-      scrapeProductData(products[i].link); 
-    }
 
+     const additionalProducts = [];   
+     
+     productElements.forEach(element => {
+
+        const linkElement = element.querySelector('a.card-img-top');
+        let link = linkElement ? linkElement.href : null; 
+    
+        if (link) {
+            link = link.replace(/^file:\/\/\/C:[^/]*/, ''); 
+            link = link.replace(/\/ro/, ''); 
+            additionalProducts.push({ link}); 
+        }
+      });
+
+    //  const maxRequests = Math.min(products.length, 10); 
+
+    // for (let i = 0; i < maxRequests; i++) {
+    //   scrapeProductData(additionalProducts[i].link); 
+    // }
+
+    additionalProducts.forEach(product => {
+        scrapeProductData(product.link); 
+      });
 
   })
   .catch(error => {
