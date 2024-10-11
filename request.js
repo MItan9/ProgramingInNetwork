@@ -40,22 +40,19 @@ fetch(proxyUrl + targetUrl)
                                     //  FOURTH TASK
       const floatPrice = parseFloat(price);
     //   console.log(typeof floatPrice); // "number"
-
-
-
+    
     const validatedName = name.replace(/\s+/g, ' ').trim(); // replace 2 and more spaces with one space
-    console.log(validatedName);
 
     if (!validatedName || validatedName.length === 0) {
       console.error('Invalid product name. Skipping product.');
       return; 
     }
 
+
+
       if (validatedName && floatPrice) {
         products.push({ validatedName, floatPrice}); 
       }
-
-
     });
 
     // console.log(products);
