@@ -1,7 +1,6 @@
 const targetUrl = 'https://www.salamander.md/ro';
 const proxyUrl = 'http://localhost:8080/';
 
-
                                     //  FIRST TASK
 
 fetch(proxyUrl + targetUrl)
@@ -110,6 +109,7 @@ fetch(proxyUrl + targetUrl)
   });
 
 
+
   function scrapeProductData(productLink) {
     fetch(proxyUrl + targetUrl + productLink)
       .then(response => {
@@ -131,6 +131,5 @@ fetch(proxyUrl + targetUrl)
       .catch(error => {
         console.error('There has been a problem with your fetch operation:', error);
       });
-  }
-  
-  
+
+    }
