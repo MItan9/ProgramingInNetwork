@@ -48,7 +48,7 @@ fetch(proxyUrl + targetUrl)
       }
     });
 
-    // console.log(products);
+    console.log(products);
 
                                       //  THIRD TASK
 
