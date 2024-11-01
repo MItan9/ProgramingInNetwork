@@ -36,72 +36,143 @@ class Person {
 
 
 
-const person = {
-    name: "John",
-    age: 30,
-    address: {
-      street: "Main",
-      city: "New York"
-    }
-  };
+// const person = {
+//     name: "John",
+//     age: 30,
+//     address: {
+//       street: "Main",
+//       city: "New York"
+//     }
+//   };
   
 
-  function serialize(obj, rootName = 'root') {
-    let result = `[${rootName}]\n`;
-    
-    for (const [key, value] of Object.entries(obj)) {
-      if (typeof value === 'object' && value !== null) {
-        result += serialize(value, key);
-      } else {
-        result += `- ${key}: ${value}\n`;
-      }
+  function serialize(data) {
+    if (Array.isArray(data)) {
+        return `A[${data.map(item => serialize(item)).join("; ")}]`;
+    } else if (typeof data === "object" && data !== null) {
+        const entries = Object.entries(data).map(
+            ([key, value]) => `${key}:${serialize(value)}`
+        );
+        return `O{${entries.join("; ")}}`;
+    } else if (typeof data === "string") {
+        return `S(${data})`;
+    } else if (typeof data === "number") {
+        return `N(${data})`;
+    } else if (typeof data === "boolean") {
+        return `B(${data})`;
     }
-    
-    return result;
-  }
-  
-  function deserialize(str) {
-    const lines = str.split('\n');
-    const stack = [];
-    let currentObj = {};
-    let currentKey = '';
-  
-    lines.forEach(line => {
-      line = line.trim();
-      if (line.startsWith('[') && line.endsWith(']')) {
-        if (currentKey) {
-          stack.push({ obj: currentObj, key: currentKey });
-        }
-        currentKey = line.slice(1, -1);
-        currentObj = {};
-      } else if (line.startsWith('-')) {
-        const [key, value] = line.slice(2).split(':').map(part => part.trim());
-        currentObj[key] = isNaN(value) ? value : Number(value);
-      } else if (line === '') {
-        if (stack.length > 0) {
-          const { obj: parentObj, key } = stack.pop();
-          parentObj[key] = currentObj;
-          currentObj = parentObj;
-        }
+    return `null`;
+}
+
+function deserialize(serializedData) {
+  if (!serializedData) return null;
+
+  if (serializedData.startsWith("A[")) {
+      const items = [];
+      let itemStart = 2; // после "A["
+      for (let i = 2, depth = 0; i < serializedData.length - 1; i++) {
+          if (serializedData[i] === '[' || serializedData[i] === '{') depth++;
+          if (serializedData[i] === ']' || serializedData[i] === '}') depth--;
+          if (serializedData[i] === ';' && depth === 0) {
+              items.push(deserialize(serializedData.slice(itemStart, i).trim()));
+              itemStart = i + 1;
+          }
       }
-    });
-  
-    return currentObj;
+      if (itemStart < serializedData.length - 1) {
+          items.push(deserialize(serializedData.slice(itemStart, serializedData.length - 1).trim()));
+      }
+      return items;
+  } else if (serializedData.startsWith("O{")) {
+      const object = {};
+      let entryStart = 2; // после "O{"
+      for (let i = 2, depth = 0; i < serializedData.length - 1; i++) {
+          if (serializedData[i] === '[' || serializedData[i] === '{') depth++;
+          if (serializedData[i] === ']' || serializedData[i] === '}') depth--;
+          if (serializedData[i] === ';' && depth === 0) {
+              const entry = serializedData.slice(entryStart, i).trim();
+              const [key, value] = entry.split(/:(.+)/); // разделяем только по первому двоеточию
+              if (key && value !== undefined) {
+                  object[key] = deserialize(value.trim());
+              }
+              entryStart = i + 1;
+          }
+      }
+      if (entryStart < serializedData.length - 1) {
+          const entry = serializedData.slice(entryStart, serializedData.length - 1).trim();
+          const [key, value] = entry.split(/:(.+)/);
+          if (key && value !== undefined) {
+              object[key] = deserialize(value.trim());
+          }
+      }
+      return object;
+  } else if (serializedData.startsWith("S(")) {
+      return serializedData.slice(2, -1);
+  } else if (serializedData.startsWith("N(")) {
+      return parseFloat(serializedData.slice(2, -1));
+  } else if (serializedData.startsWith("B(")) {
+      return serializedData.slice(2, -1) === "true";
   }
-  
-  const serialized = serialize(person, 'person');
-  console.log(serialized);
-  /*
-  [person]
-  - name: John
-  - age: 30
-  [address]
-  - street: Main
-  - city: New York
-  */
-  
-  const deserialized = deserialize(serialized);
-  console.log(deserialized);
-  // { name: 'John', age: 30, address: { street: 'Main', city: 'New York' } }
-  
-  
+  return null;
+}
+
+// Пример использования:
+// const data = {
+//   name: "Alice",
+//   age: 30,
+//   isMember: true,
+//   favorites: ["chess", "books"],
+//   profile: {
+//       id: 123,
+//       isActive: false
+//   }
+// };
+
+
+const data = {
+  projectName: "Deep Space Exploration",
+  launchDate: "2030-07-16",
+  isClassified: true,
+  stages: [
+      {
+          stageNumber: 1,
+          description: "Preliminary Research",
+          milestones: [
+              { name: "Mission Proposal", completed: true, date: "2025-01-10" },
+              { name: "Budget Approval", completed: false }
+          ]
+      },
+      {
+          stageNumber: 2,
+          description: "Technology Development",
+          milestones: [
+              { name: "Prototype Development", completed: false },
+              { name: "Testing Phase", completed: false }
+          ]
+      }
+  ],
+  team: {
+      leader: { name: "Dr. Emily Carter", role: "Chief Scientist" },
+      members: [
+          { name: "Alice Johnson", role: "Engineer" },
+          { name: "David White", role: "Astrophysicist" }
+      ]
+  },
+  equipment: [
+      "Spectrometer",
+      "Thermal Camera",
+      "Radiation Shield"
+  ],
+  objectives: [
+      "Analyze planetary atmosphere",
+      "Capture high-resolution surface images",
+      "Collect and return soil samples"
+  ]
+};
+
+
+
+const serialized = serialize(data);
+console.log("Serialized:", serialized);
+
+const deserialized = deserialize(serialized);
+console.log("Deserialized:", deserialized);
