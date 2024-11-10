@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Чат-комната</title>
+    <style>
+        #chat {
+            border: 1px solid #000;
+            height: 300px;
+            overflow-y: scroll;
+            padding: 10px;
+        }
+        #chat div {
+            margin: 5px 0;
+        }
+        #username, #message {
+            width: 100%;
+            margin: 5px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>Чат-комната</h1>
+
+    <input type="text" id="username" placeholder="Введите ваше имя" />
+    <button onclick="joinRoom()">Присоединиться</button>
+
+    <div id="chat"></div>
+
+    <input type="text" id="message" placeholder="Введите сообщение" />
+    <button onclick="sendMessage()">Отправить</button>
+    <button onclick="leaveRoom()">Покинуть комнату</button>
+
+    <script>
+        let ws;
+        let username;
+
+        function joinRoom() {
+            username = document.getElementById('username').value;
+            if (!username) {
+                alert('Пожалуйста, введите имя');
+                return;
+            }
+
+            ws = new WebSocket('ws://localhost:3000/ws');
+
+            ws.onopen = () => {
+                ws.send(JSON.stringify({ command: 'join_room', username }));
+                addMessage('Вы присоединились к комнате.');
+            };
+
+            ws.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                switch (data.command) {
+                    case 'user_joined':
+                    case 'user_left':
+                        addMessage(data.message);
+                        break;
+                    case 'new_message':
+                        addMessage(`${data.username}: ${data.message}`);
+                        break;
+                }
+            };
+
+            ws.onclose = () => {
+                addMessage('Вы покинули комнату.');
+            };
+        }
+
+        function sendMessage() {
+            const message = document.getElementById('message').value;
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({ command: 'send_msg', message, username }));
+                document.getElementById('message').value = '';
+            } else {
+                alert('Вы не присоединились к комнате.');
+            }
+        }
+
+        function leaveRoom() {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({ command: 'leave_room', username }));
+                ws.close();
+            }
+        }
+
+        function addMessage(text) {
+            const chat = document.getElementById('chat');
+            const messageElement = document.createElement('div');
+            messageElement.textContent = text;
+            chat.appendChild(messageElement);
+            chat.scrollTop = chat.scrollHeight;
+        }
+    </script>
+</body>
+</html>

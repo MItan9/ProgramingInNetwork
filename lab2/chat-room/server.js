@@ -14,31 +14,36 @@ const db = mysql.createConnection({
 
 db.connect((err) => {
     if (err) {
-        console.error('Error connecting to the database:', err);
+        console.error('Ошибка подключения к базе данных:', err);
         return;
     }
-    console.log('Database connection established');
+    console.log('Подключение к базе данных установлено');
 });
 
 const app = express();
+const server = http.createServer(app);
+const wss = new WebSocket.Server({ server, path: '/ws' });
+
 app.use(express.json());
 
-// Загрузка данных из JSON файла в базу данных
+// Загрузка и вставка данных из JSON файла
 fs.readFile('products.json', 'utf8', (err, data) => {
     if (err) {
-        console.error('Error reading file:', err);
+        console.error('Ошибка при чтении файла:', err);
         return;
     }
 
     const products = JSON.parse(data);
+
+    // Вставка каждого продукта в базу данных
     products.forEach(product => {
         const { ProductName, MDLPrice, EURPrice } = product;
         const query = 'INSERT INTO products (ProductName, MDLPrice, EURPrice) VALUES (?, ?, ?)';
         db.query(query, [ProductName, MDLPrice, EURPrice], (err, result) => {
             if (err) {
-                console.error('Error inserting product:', err);
+                console.error('Ошибка при вставке продукта:', err);
             } else {
-                console.log(`Product ${ProductName} added successfully`);
+                console.log(`Продукт ${ProductName} успешно добавлен`);
             }
         });
     });
@@ -94,16 +99,7 @@ app.delete('/products', (req, res) => {
     });
 });
 
-// Запуск HTTP сервера на порту 3000
-const HTTP_PORT = 3000;
-const httpServer = http.createServer(app);
-httpServer.listen(HTTP_PORT, () => {
-    console.log(`HTTP server running at http://localhost:${HTTP_PORT}`);
-});
-
-// WebSocket сервер для чата на порту 3001
-const WEBSOCKET_PORT = 3001;
-const wss = new WebSocket.Server({ port: WEBSOCKET_PORT });
+// WebSocket логика для чата
 const chatRoomUsers = new Set();
 
 wss.on('connection', (ws) => {
@@ -119,7 +115,7 @@ wss.on('connection', (ws) => {
                 broadcast({
                     command: 'user_joined',
                     username,
-                    message: `${username} joined the room`
+                    message: `${username} присоединился к комнате`
                 });
                 break;
 
@@ -139,7 +135,7 @@ wss.on('connection', (ws) => {
                 broadcast({
                     command: 'user_left',
                     username,
-                    message: `${username} left the room`
+                    message: `${username} покинул комнату`
                 });
                 ws.close();
                 break;
@@ -151,7 +147,7 @@ wss.on('connection', (ws) => {
         broadcast({
             command: 'user_left',
             username,
-            message: `${username} disconnected`
+            message: `${username} отключился`
         });
     });
 });
@@ -165,4 +161,8 @@ function broadcast(data) {
     });
 }
 
-console.log(`WebSocket server running at ws://localhost:${WEBSOCKET_PORT}`);
+// Запуск сервера
+const PORT = 3000;
+server.listen(PORT, () => {
+    console.log(`Сервер запущен на http://localhost:${PORT}`);
+});

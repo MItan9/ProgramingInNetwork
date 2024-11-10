@@ -36,24 +36,14 @@ class Person {
 
 
 
-// const person = {
-//     name: "John",
-//     age: 30,
-//     address: {
-//       street: "Main",
-//       city: "New York"
-//     }
-//   };
-  
-
-  function serialize(data) {
+  function serialize(data) {    // вызывает саму себя чтобы пройтись по каждому элементу массива
     if (Array.isArray(data)) {
         return `A[${data.map(item => serialize(item)).join("; ")}]`;
     } else if (typeof data === "object" && data !== null) {
-        const entries = Object.entries(data).map(
-            ([key, value]) => `${key}:${serialize(value)}`
+        const entries = Object.entries(data).map(                          //преобразует объект в массив 
+            ([key, value]) => `${key}:${serialize(value)}`    //используется для серриализации вложенных объектов 
         );
-        return `O{${entries.join("; ")}}`;
+        return `O{${entries.join("; ")}}`;   // для разделения пар ключ значение
     } else if (typeof data === "string") {
         return `S(${data})`;
     } else if (typeof data === "number") {
@@ -70,6 +60,8 @@ function deserialize(serializedData) {
   if (serializedData.startsWith("A[")) {
       const items = [];
       let itemStart = 2; // после "A["
+
+      //  depth, отслеживает уровень вложенности
       for (let i = 2, depth = 0; i < serializedData.length - 1; i++) {
           if (serializedData[i] === '[' || serializedData[i] === '{') depth++;
           if (serializedData[i] === ']' || serializedData[i] === '}') depth--;
@@ -128,46 +120,16 @@ function deserialize(serializedData) {
 // };
 
 
-const data = {
-  projectName: "Deep Space Exploration",
-  launchDate: "2030-07-16",
-  isClassified: true,
-  stages: [
-      {
-          stageNumber: 1,
-          description: "Preliminary Research",
-          milestones: [
-              { name: "Mission Proposal", completed: true, date: "2025-01-10" },
-              { name: "Budget Approval", completed: false }
-          ]
-      },
-      {
-          stageNumber: 2,
-          description: "Technology Development",
-          milestones: [
-              { name: "Prototype Development", completed: false },
-              { name: "Testing Phase", completed: false }
-          ]
-      }
-  ],
-  team: {
-      leader: { name: "Dr. Emily Carter", role: "Chief Scientist" },
-      members: [
-          { name: "Alice Johnson", role: "Engineer" },
-          { name: "David White", role: "Astrophysicist" }
-      ]
-  },
-  equipment: [
-      "Spectrometer",
-      "Thermal Camera",
-      "Radiation Shield"
-  ],
-  objectives: [
-      "Analyze planetary atmosphere",
-      "Capture high-resolution surface images",
-      "Collect and return soil samples"
-  ]
-};
+const data = ['name', {
+    name: "Alice",
+    age: 30,
+    isMember: true,
+    favorites: ["chess", "books"],
+    profile: {
+        id: 123,
+        isActive: false
+    }
+  }];
 
 
 
