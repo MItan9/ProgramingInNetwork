@@ -42,7 +42,9 @@
                 return;
             }
 
-            ws = new WebSocket('ws://localhost:3000/ws');
+            // ws = new WebSocket('ws://localhost:3000/ws');
+            ws = new WebSocket('ws://localhost:3001');
+
 
             ws.onopen = () => {
                 ws.send(JSON.stringify({ command: 'join_room', username }));

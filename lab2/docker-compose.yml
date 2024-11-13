@@ -1,0 +1,43 @@
+version: '3.8'
+
+services:
+  my_database:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: root_password    # Set password for root
+      MYSQL_DATABASE: lab                   # Create the 'lab' database on startup
+      MYSQL_USER: user                      # Create a user named 'user'
+      MYSQL_PASSWORD: root                  # Set the password for 'user'
+    ports:
+      - "3307:3306"                          # Expose port 3306 for MySQL
+    volumes:
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql  # Optional: Load init script
+    networks:
+      - lab2_app_network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 30s
+      retries: 3
+      start_period: 5s
+      timeout: 5s
+
+  my_app:
+    build: .
+    depends_on:
+      my_database:
+        condition: service_healthy
+    environment:
+      DB_HOST: my_database        # The name of the database container
+      DB_USER: user               # Database user
+      DB_PASSWORD: root           # Database user password
+      DB_NAME: lab                # Database name
+   
+    ports:
+      - "3000:3000"               # Adjust this according to your app's needs
+
+    networks:
+      - lab2_app_network
+
+networks:
+  lab2_app_network:
+    driver: bridge
