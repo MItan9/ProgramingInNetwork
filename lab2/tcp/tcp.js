@@ -106,7 +106,7 @@ async function handleReadOperationWithSync(socket) {
 
   const release = await mutex.acquire(); // Захватываем мьютекс, чтобы другие операции не могли получить доступ к файлу
   try {
-    const content = await fs.readFile(FILE_PATH, "utf8"); // Читаем содержимое файла
+    const content = await fs.readFile(FILE_PATH, "utf8");
     socket.write("Data read from file:\n" + content); 
     console.log("Data read from file:\n", content);
   } catch (err) {
