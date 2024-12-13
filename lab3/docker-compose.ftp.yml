@@ -1,0 +1,66 @@
+version: '3.8'
+services:
+  app:
+    build: .
+    container_name: lab2_server
+    depends_on:
+      - ftp_server
+    networks:
+      - app-network
+  ftp_server:
+    image: delfer/alpine-ftp-server
+    container_name: ftp_server
+    ports:
+      - "21:21" # FTP Command Port
+      - "21000-21010:21000-21010" # Passive Mode Ports
+    environment:
+      - USERS=testuser|testpass
+      - ADDRESS=ftp_server
+    volumes:
+      - ./ftp_data:/home/testuser
+
+    networks:
+      - app-network
+  my_database:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: root_password    # Set password for root
+      MYSQL_DATABASE: lab                   # Create the 'lab' database on startup
+      MYSQL_USER: user                      # Create a user named 'user'
+      MYSQL_PASSWORD: root                  # Set the password for 'user'
+    ports:
+      - "3307:3306"                          # Expose port 3306 for MySQL
+    volumes:
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql  # Optional: Load init script
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 30s
+      retries: 3
+      start_period: 5s
+      timeout: 5s
+
+  my_app:
+    build:
+      context: ../lab2  # Путь к папке
+      dockerfile: Dockerfile  
+    depends_on:
+      my_database:
+        condition: service_healthy
+    environment:
+      DB_HOST: my_database        # The name of the database container
+      DB_USER: user               # Database user
+      DB_PASSWORD: root           # Database user password
+      DB_NAME: lab                # Database name
+   
+    ports:
+      - "3000:3000"               # Adjust this according to your app's needs
+
+    networks:
+      - app-network
+
+
+networks:
+  app-network:
+    driver: bridge

@@ -28,7 +28,7 @@ class Node {
     this.resetElectionTimer();
   }
 
-  getRandomElectionTimeout() {
+  getRandomElectionlastHeartbeatTimeout() {
     return 1500 + Math.random() * 1500; // 1.5 - 3 секунды
   }
 

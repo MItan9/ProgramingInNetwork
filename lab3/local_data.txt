@@ -1,0 +1,1 @@
+﻿{"name": "example","value": 42}
